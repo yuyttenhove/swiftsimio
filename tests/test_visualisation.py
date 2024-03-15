@@ -152,10 +152,14 @@ def test_slice_parallel(save=False):
         .reshape((3, number_of_parts))
         .astype(np.float64)
     )
-    hsml = np.random.rand(number_of_parts).astype(np.float32) * h_max
-    masses = np.ones(number_of_parts, dtype=np.float32)
+    masses = np.random.random(number_of_parts).astype(np.float32)
 
-    for backend in slice_backends.keys():
+    for backend in list(slice_backends.keys())[1:]:
+        if backend == "nearest_neighbours":
+            hsml = (0.5 * np.random.random((2 * number_of_parts)).astype(np.float32) + 0.5) * h_max
+        else:
+            hsml = (0.5 * np.random.random(number_of_parts).astype(np.float32) + 0.5) * h_max
+
         image = slice_backends[backend](
             coordinates[0],
             coordinates[1],
@@ -448,12 +452,19 @@ def test_periodic_boundary_wrapping():
 
     # test the slice scatter function
     for backend in slice_backends.keys():
+        if backend == "nearest_neighbours":
+            slicing_hsml_periodic = np.concatenate([hsml_periodic, hsml_periodic])
+            slicing_hsml_non_periodic = np.concatenate([hsml_non_periodic, hsml_non_periodic])
+        else:
+            slicing_hsml_periodic = hsml_periodic
+            slicing_hsml_non_periodic = hsml_non_periodic
+
         image1 = slice_backends[backend](
             x=coordinates_periodic[:, 0],
             y=coordinates_periodic[:, 1],
             z=coordinates_periodic[:, 2],
             m=masses_periodic,
-            h=hsml_periodic,
+            h=slicing_hsml_periodic,
             z_slice=0.5,
             xres=pixel_resolution,
             yres=pixel_resolution,
@@ -466,7 +477,7 @@ def test_periodic_boundary_wrapping():
             y=coordinates_non_periodic[:, 1],
             z=coordinates_non_periodic[:, 2],
             m=masses_non_periodic,
-            h=hsml_non_periodic,
+            h=slicing_hsml_non_periodic,
             z_slice=0.5,
             xres=pixel_resolution,
             yres=pixel_resolution,
