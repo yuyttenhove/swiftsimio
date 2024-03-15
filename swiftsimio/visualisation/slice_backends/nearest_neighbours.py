@@ -69,12 +69,11 @@ def nn_slice_scatter_core(
     nn_idx = full((xres, yres), -1, dtype=int64)
     nn_d2 = full((xres, yres), inf, dtype=float32)
 
-    res = max(xres, yres)
     max_idx_x = xres - 1
     max_idx_y = yres - 1
 
     # We need this for combining with the x_pos and y_pos variables.
-    float_res = float64(res)
+    float_res = float64(max(xres, yres))
     pixel_width = 1.0 / float_res
 
     i_box_x = 1.0 / box_x if box_x > 0.0 else 0.0
@@ -146,7 +145,7 @@ def nn_slice_scatter_core(
 
     # Now perform a flood fill to treat the remaining pixels
     # Create the ringbuffer containing the indices of the pixels to be checked
-    buffer_size = 4 * res * res
+    buffer_size = 4 * xres * yres
     ring_buffer = zeros(buffer_size, dtype=int64)
     buffer_head = 0
     buffer_tail = 0
@@ -204,7 +203,7 @@ def nn_slice_scatter_core(
                 if d2 < nn_d2[nx, ny]:
                     nn_idx[nx, ny] = i
                     nn_d2[nx, ny] = d2
-                    ring_buffer[buffer_tail % buffer_size] = nx * res + ny
+                    ring_buffer[buffer_tail % buffer_size] = nx * yres + ny
                     buffer_tail += 1
 
     return nn_idx, nn_d2
