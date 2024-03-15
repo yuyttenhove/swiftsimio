@@ -102,7 +102,9 @@ def nn_slice_scatter_core(
         zshift_min = -1
         zshift_max = 2
 
-    for p_idx, x_pos_original, y_pos_original, z_pos_original, h in zip(part_indices, x_coords, y_coords, z_coords, hsml):
+    for p_idx, x_pos_original, y_pos_original, z_pos_original, h in zip(
+        part_indices, x_coords, y_coords, z_coords, hsml
+    ):
         # Compute kernel width in pixels
         safety_radius = h * 2.0
         kernel_width = int32(safety_radius / pixel_width) + 1
@@ -127,12 +129,23 @@ def nn_slice_scatter_core(
                     cell_y = int32(float_res * y_pos)
 
                     # No overlap in x, y  we can skip this particle
-                    if cell_x < -kernel_width or cell_x > max_idx_x + kernel_width or cell_y < -kernel_width or cell_y > max_idx_y + kernel_width:
+                    if (
+                        cell_x < -kernel_width
+                        or cell_x > max_idx_x + kernel_width
+                        or cell_y < -kernel_width
+                        or cell_y > max_idx_y + kernel_width
+                    ):
                         continue
 
                     # Loop over pixels in the kernel
-                    x_range = (max(0, cell_x - kernel_width), min(cell_x + kernel_width, max_idx_x + 1))
-                    y_range = (max(0, cell_y - kernel_width), min(cell_y + kernel_width, max_idx_y + 1))
+                    x_range = (
+                        max(0, cell_x - kernel_width),
+                        min(cell_x + kernel_width, max_idx_x + 1),
+                    )
+                    y_range = (
+                        max(0, cell_y - kernel_width),
+                        min(cell_y + kernel_width, max_idx_y + 1),
+                    )
                     for px in range(*x_range):
                         for py in range(*y_range):
                             if nn_d2[px, py] < dz2:
@@ -172,8 +185,8 @@ def nn_slice_scatter_core(
                         buffer_tail += 1
                         break
                 else:
-                    continue # only executed if the inner loop did NOT break
-                break # break the outer loop also if the inner loop was broken
+                    continue  # only executed if the inner loop did NOT break
+                break  # break the outer loop also if the inner loop was broken
 
     # Now we flood fill the remaining pixels
     while buffer_head != buffer_tail:
@@ -279,8 +292,10 @@ def slice_scatter(
     numpart = x.shape[0]
     h, r = h[:numpart], h[numpart:]
 
-    nn_idx, _ = nn_slice_scatter_core(x, y, z, z_slice, h, xres, yres, box_x, box_y, box_z)
-    values = m / r**3
+    nn_idx, _ = nn_slice_scatter_core(
+        x, y, z, z_slice, h, xres, yres, box_x, box_y, box_z
+    )
+    values = m / r ** 3
 
     return values[nn_idx.flatten()].reshape(xres, yres)
 
@@ -351,7 +366,6 @@ def slice_scatter_parallel(
     # Same as scatter, but executes in parallel! This is actually trivial,
     # we just make NUM_THREADS images and reduce them by picking the minimal distances.
 
-
     numpart = x.shape[0]
     h, r = h[:numpart], h[numpart:]
 
@@ -391,6 +405,5 @@ def slice_scatter_parallel(
     amin = argmin(output_dist_sqrd, axis=1)[:, np.newaxis]
     nn_idx = take_along_axis(output_idx, amin, axis=1)[:, 0]
 
-    values = m / r**3
+    values = m / r ** 3
     return values[nn_idx].reshape(xres, yres)
-

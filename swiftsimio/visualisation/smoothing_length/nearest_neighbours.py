@@ -10,10 +10,7 @@ def cbrt_cosmo_array(arr):
     # TODO remove this hack once np.cbrt is supported by unyt
     units = (hasattr(arr, "units"), getattr(arr, "units", None))
     comoving = getattr(arr, "comoving", None)
-    cosmo_factor = (
-        hasattr(arr, "cosmo_factor"),
-        getattr(arr, "cosmo_factor", None),
-    )
+    cosmo_factor = (hasattr(arr, "cosmo_factor"), getattr(arr, "cosmo_factor", None))
     if units[0]:
         units_cbrt = units[1] ** (1.0 / 3.0)
     else:
@@ -24,6 +21,7 @@ def cbrt_cosmo_array(arr):
         comoving=comoving,
         cosmo_factor=_cbrt_cosmo_factor(cosmo_factor),
     )
+
 
 def concatenate_cosmo_arrays(arrs):
     """
@@ -47,14 +45,23 @@ def concatenate_cosmo_arrays(arrs):
 
     comoving = [getattr(arr, "comoving", None) for arr in arrs]
     if any(c != comoving[0] for c in comoving):
-        raise RuntimeError("Trying to concatenate arrays with inconsistent comoving flags")
+        raise RuntimeError(
+            "Trying to concatenate arrays with inconsistent comoving flags"
+        )
 
-    cosmo_factors = [(hasattr(arr, "cosmo_factor"), getattr(arr, "cosmo_factor", None)) for arr in arrs]
+    cosmo_factors = [
+        (hasattr(arr, "cosmo_factor"), getattr(arr, "cosmo_factor", None))
+        for arr in arrs
+    ]
     if any(c[0] for c in cosmo_factors):
         if not all(c[0] for c in cosmo_factors):
-            raise RuntimeError("Trying to concatenate arrays with and without cosmo_factor")
+            raise RuntimeError(
+                "Trying to concatenate arrays with and without cosmo_factor"
+            )
         if not all(c[1] == cosmo_factors[0][1] for c in cosmo_factors):
-            raise RuntimeError("Trying to concatenate arrays with inconsistent cosmo_factors")
+            raise RuntimeError(
+                "Trying to concatenate arrays with inconsistent cosmo_factors"
+            )
 
     return cosmo_array(
         concatenate([arr.value for arr in arrs]),
@@ -62,6 +69,7 @@ def concatenate_cosmo_arrays(arrs):
         comoving=comoving[0],
         cosmo_factor=cosmo_factors[0][1],
     )
+
 
 def get_hsml(data: SWIFTDataset) -> cosmo_array:
     """

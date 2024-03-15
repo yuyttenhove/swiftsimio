@@ -156,9 +156,13 @@ def test_slice_parallel(save=False):
 
     for backend in list(slice_backends.keys())[1:]:
         if backend == "nearest_neighbours":
-            hsml = (0.5 * np.random.random((2 * number_of_parts)).astype(np.float32) + 0.5) * h_max
+            hsml = (
+                0.5 * np.random.random((2 * number_of_parts)).astype(np.float32) + 0.5
+            ) * h_max
         else:
-            hsml = (0.5 * np.random.random(number_of_parts).astype(np.float32) + 0.5) * h_max
+            hsml = (
+                0.5 * np.random.random(number_of_parts).astype(np.float32) + 0.5
+            ) * h_max
 
         image = slice_backends[backend](
             coordinates[0],
@@ -454,7 +458,9 @@ def test_periodic_boundary_wrapping():
     for backend in slice_backends.keys():
         if backend == "nearest_neighbours":
             slicing_hsml_periodic = np.concatenate([hsml_periodic, hsml_periodic])
-            slicing_hsml_non_periodic = np.concatenate([hsml_non_periodic, hsml_non_periodic])
+            slicing_hsml_non_periodic = np.concatenate(
+                [hsml_non_periodic, hsml_non_periodic]
+            )
         else:
             slicing_hsml_periodic = hsml_periodic
             slicing_hsml_non_periodic = hsml_non_periodic
