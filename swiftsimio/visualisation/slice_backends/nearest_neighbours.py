@@ -31,6 +31,7 @@ def nn_slice_scatter_core(
     box_x: float = 0.0,
     box_y: float = 0.0,
     box_z: float = 0.0,
+    safety_factor: float = 1.5,
 ) -> Tuple[ndarray, ndarray]:
     """
     Creates two 2D numpy arrays with the same shape as the slice image,
@@ -59,6 +60,8 @@ def nn_slice_scatter_core(
     box_z: float
         box size in z, in the same rescaled length units as x, y and z.
         Used for periodic wrapping (if not 0).
+    safety_factor: float
+        Factor to multiply the safety radius with to check whether to consider particles
 
     Returns
     -------
@@ -101,9 +104,10 @@ def nn_slice_scatter_core(
 
     for p_idx, x_pos_original, y_pos_original, z_pos_original, h in zip(part_indices, x_coords, y_coords, z_coords, hsml):
         # Compute kernel width in pixels
-        kernel_width = int32(h * 2.0 / pixel_width) + 1
+        safety_radius = h * 2.0
+        kernel_width = int32(safety_radius / pixel_width) + 1
 
-         # loop over periodic copies of the particle
+        # loop over periodic copies of the particle
         for xshift in range(xshift_min, xshift_max):
             for yshift in range(yshift_min, yshift_max):
                 for zshift in range(zshift_min, zshift_max):
@@ -112,6 +116,9 @@ def nn_slice_scatter_core(
                     z_pos = z_pos_original + zshift * box_z
                     # dz_wrapped = dz - width_z * round(dz / width_z)
                     dz = z_pos - z_slice - box_z * round((z_pos - z_slice) * i_box_z)
+                    if abs(dz) > safety_factor * safety_radius:
+                        # No overlap in z, we can skip this particle
+                        continue
                     dz2 = dz ** 2
 
                     # Calculate the pixel that this particle lives above; use 64 bits
